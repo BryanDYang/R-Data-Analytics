@@ -1,0 +1,405 @@
+---
+title: "Module 3 Team Assignment"
+author: "Abdoul Diagne, Jacqueline Garcia, Vanessa Garner, Fatima Saleem, Jenna Swiecki, Bryan Yang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+### Part 1 - P-Card Internal Control Test
+
+* 1a. Paste the code to arrive at your list of 10 to 20 rows to your report.
+
+```{r}
+library(tidyverse)
+df <- read_rds("class_data_pcard_data_forNLP.rds")
+
+# clean data
+df1 <- df %>% select(-Agency.Number, -Agency.Description, -Posting.Date, -Month, -Weekday, -Day.Month)
+
+# combine all strings into one column
+df1 <- df1 %>%
+  mutate(df1 %>% select(Item.Description, Merchant, MCC) %>%
+         tidyr::unite(all_text, sep = ' ', remove = T, na.rm = T)
+         )
+
+# create regex pattern
+pattern <- "\\bWINE|\\bBEER|\\bALCOHOL|\\bSPIRITS|\\bATM\\b|\\bCASH\b|\\bMONEY|\\bSTAMP\\b|POSTAGE|\\bUNIFORM|\\bAMMUNITION|\\bAMMO\\b|\\bGUN\\b|\\bFINES|CIGAR|TRAILER PARK|\\bINSURANCE|MASSAGE|CONVENTION|CONFERENCE|\\bPRIME\\b|MEMBERSHIP|GIFT|DECORATIONS|DATA PLAN|PREPAYMENT|DEPOSIT|DONATION|INCENTIVE AWARD|EMPLOYEE SERVICE|GASOLINE|FUEL|SALES TAX|MOVING EXPENSE|PERSONAL|HEALTH CARE|CANDY|FLOWERS|GREETING CARD|LATE FEES|REBATES|REWARDS|CASH BACK|SPLIT PURCHASE|SALARY|WAGES|BENEFITS"
+
+# create new column if problematic words exists & keep only problematic rows
+df1a <- df1 %>%
+  mutate(problem = str_count(all_text, pattern))
+
+# filter
+df_problems <- df1a %>% filter(problem > 0)
+
+# eliminate false positives
+df_problems %>% 
+  select(Cardholder.Name, Item.Description, Amount, Merchant, MCC, problem) %>%
+  arrange(MCC, desc(Amount))
+
+# eliminate rows that are not a problem and then check again
+safe_words <- "ISOPROPYL|SPRY GUN|CAULK GUN|BLOWGUN|HAND SANITIZER|HAND SANITIZI|ALCOHOL WIPES|HEAT GUN|DISINFECTANT|MINERAL SPIRITS|DISINFECTA|ETHYL|GLUE GUN|STAPLE GUN|RUBBING ALCOHOL|LCOHOL WET WIPES|ALCOHOL REAGENT|ALCOHOL PREP|DENATURED ALCOHOL|BLOW GUN|VINYL ALCOHOL|ALCOHOL RESISTANT|ALCOHOL WIPE|ALCOHOL-RE|GUN BALLING|SPRAY GUN|BEER PING|TAPE DISP|MONEY BANK BAG|RACISM ANTIRACIS|RUBBERSTAMPS|AMYL ALCOHOL|RUBBER STAMP|ALCOHOL WIP|GLUE GUN|BDH|ALCOHOL DISPENSER|UNIVERSITY|RANCHERS CLUB|UNIVERSITY DINING|RENTAL CAR|RENTAL VEHICLE|LAB|LAWN|INSTITUTIONAL"
+  
+# keep only rows without safe words in them
+df_problems <- df_problems %>%
+  filter(str_detect(all_text, safe_words) == F)
+
+# look at the potential violations that are high in amount
+df_problems <- df_problems %>%
+  select(Cardholder.Name, Item.Description, Amount, Merchant, Transaction.Date, MCC, problem) %>%
+  filter(Amount > 800) %>%
+  arrange(desc(Amount))
+```
+
+```{r}
+# problematic MCC Code Analysis
+# Get list of unique MCCs
+df2 <- df_problems %>% arrange(MCC)
+n_distinct(df2$MCC)
+unique(df2$MCC)
+
+# Trim white spaces
+df2 <- df2 %>% mutate(MCC2 = str_trim(MCC, side='both'))
+
+# Replac punctuation with ''
+df2 <- df2 %>% mutate(MCC2 = str_replace_all(MCC2, '[:punct:]', ''))
+
+n_distinct(df2$MCC2)
+unique(df2$MCC2)
+```
+   
+```{r}
+# Keep problematic MCCs
+# Make list of problematic MCCs
+mcc_list = c('STEAMSHIP LINESCRUISE LINES', 
+             'TELEGRAPH SERVICES', 
+             'WIRE TRANSFER  MONEY ORDERS', 
+             'DUTY FREE STORES', 
+             'COCKTAIL LOUNGES BARS  ALCOHOLIC BEVERAGES', 
+             'DIGITAL GOODS MEDIA BOOKS MOVIES, MUSIC', 
+             'DIGITAL GOODS GAMES', 
+             'PACKAGE STORES  BEER WINE AND LIQUOR', 
+             'PAWN SHOPS', 
+             'DIRECT MARKETING INSURANCE SERVICES', 
+             'CIGAR STORES  STANDS', 
+             'FINANCIAL INSTITUTIONS  MANUAL CASH DISBURSEMENTS', 
+             'FINANCIAL INSTITUTIONS  AUTOMATED CASH DISBURSEMENTS', 
+             'FINANCIAL INSTITUTIONS  MERCHANDISE AND SERVICES', 
+             'NON-FINANCIAL INSTITUTIONS  FOREIGN CURRENCY, CHEQUES', 
+             'SECURITY BROKERSDEALERS', 
+             'INSURANCE SALES UNDERWRITING AND PREMIUMS', 
+             'INSURANCE PREMIUMS', 
+             'INSURANCE  NOT ELSEWHERE CLASSIFIED', 
+             'INSURANCESALES & UNDERWRITING',
+             'REMOTE STORED VALUE  MEMBER FINANCIAL INSTITUTION', 
+             'REMOTE STORED VALUE  MERCHANT', 
+             'PAYMENT SERVICE PROVIDER', 
+             'PAYMENT TRANSACTION  MEMBER FINANCIAL INSTITUTION', 
+             'PAYMENT TRANSACTION  MERCHANT', 
+             'MASTERCARD INITIATED REBATE/REWARDS', 
+             'TIMESHARES', 
+             'SPORTING  RECREATIONAL CAMPS', 
+             'TRAILER PARKS  CAMPGROUNDS', 
+             'ESCORT SERVICES', 
+             'DATING  ESCORT SERVICES', 
+             'TAX PREPARATION SERVICE', 
+             'COUNSELING SERVICE  DEBT, MARRIAGE, PERSONAL', 
+             'BABYSITTING SERVICES', 
+             'MASSAGE PARLORS', 
+             'SPAS  HEALTH  BEAUTY', 
+             'MOTORHOME  RECREATIONAL VEHICLE RENTAL', 
+             'GOVERNMENTOWNED LOTTERIES', 
+             'GOVERNMENTLICENSED CASINOS ONLINE GAMBLING', 
+             'GOVERNMENTLICENSED HORSE/DOG RACING', 
+             'VIDEO RENTAL STORES', 
+             'DANCE HALLS STUDIOS  SCHOOLS', 
+             'BILLIARD  POOL ESTABLISHMENTS', 
+             'TOURIST ATTRACTIONS  EXHIBITS', 
+             'GOLF COURSES  PUBLIC', 
+             'VIDEO AMUSEMENT GAME SUPPLIES', 
+             'VIDEO GAME ARCADESESTABLISHMENTS', 
+             'BETTING INCLUDING LOTTERY TICKETS', 
+             'AMUSEMENT PARKS CIRCUSES  CARNIVALS', 
+             'MEMBERSHIP CLUBS SPORTS, RECREATION, ATHLETIC', 
+             'AQUARIUMS SEAQUARIUMS DOLPHINARIUMS', 
+             'ZOOS AMUSEMENT  RECREATION SERVICES', 
+             'COURT COSTS ALIMONY CHILD SUPPORT', 
+             'FINES', 
+             'BAIL AND BOND PAYMENTS', 
+             'IPURCHASING PILOT', 
+             'GOVERNMENT LOAN PAYMENTS', 
+             'AUTOMATED REFERRAL SERVICE', 
+             'VISA CREDENTIAL SERVER', 
+             'GCAS EMERGENCY SERVICES', 
+             'UK SUPERMARKETS ELECTRONIC HOT FILE', 
+             'UK PETROL STATIONS ELECTRONC HOT FILE', 
+             'GAMBLING  HORSEDOG RACING  STATE LOTTERY', 
+             'INTRACOMPANY PURCHASES', 
+             'CLIENT DEFINED MCC',
+             'DRINKING PLACES ALCOHOLIC BEVBARS TA',
+             'DIGITAL GOODS  GAMES', 
+             'DIGITAL GOODS  MEDIA BOOKS MOVIES MUSIC',
+             'DIGITAL GOODS  MEDIABOOKSMOVIES,MUSIC', 
+             'PACKAGE STORES BEER LIQUOR',
+             'CIGAR STORES AND STANDS', 
+             'INSURANCESALES  UNDERWRITING', 
+             'SPORTING AND RECREATIONAL CAMPS', 
+             'TRAILER PARKS AND CAMPGROUNDS', 
+             'COUNSELING SERVICEDEBT MARRIAGE PERSO',
+             'HEALTH AND BEAUTY SPAS',
+             'MOTOR HOME AND RECREATIONAL VEHICLE RENT',
+             'BEAU RIVAGE HOTEL AND CASINO',
+             'LUXOR HOTEL AND CASINO',
+             'MIRAGE HOTEL AND CASINO',
+             'VIDEO AMUSEMENT GAME SUPPLIES',
+             'VIDEO RENTAL STORES',
+             'DANCE HALLS STUDIOS AND SCHOOLS',
+             'DANCE HALLS STUDIOS AND SCHOOLS',
+             'BILLIARD AND POOL ESTABLISHMENTS',
+             'TOURIST ATTRACTIONS AND EXHIBITS',
+             'GOLF COURSESPUBLIC',
+             'AMUSEMENT PARKS CIRCUSES CARNIVALS FO',
+             'AMUSEMENT RECREATION SERVICES SWIMMING',
+             'AMUSEMENTRECREATION SERVICES (SWIMMING',
+             'MEMBERSHIP CLUBSSPORTSRECREATION,ATHL', 
+             'MEMBERSHIP CLUBS SPORTS RECREATION ATHL',
+             'CHILD CARE SERVICES')
+```
+
+```{r}
+# Keep only problematic ones
+mcc_problems <- df2 %>% filter(MCC2 %in% mcc_list)
+
+# view
+mcc_problems %>% select(Cardholder.Name, Item.Description, Amount, Merchant, MCC2) %>% 
+  arrange(MCC2, Merchant, desc(Amount))
+
+# Especially problematic
+mcc_problems <- mcc_problems %>% select(Cardholder.Name, Item.Description, Amount, Merchant, Transaction.Date, MCC2) %>%
+  filter(Amount > 800) %>%
+  arrange(desc(Amount))
+
+```
+
+
+* 1b. Print/display your 10 to 20 rows in your notebook. These rows are a list of transactions, not a list of MCCs.
+
+```{r}
+mcc_problems [1:10,]
+```
+
+* 1c. Write a paragraph to describe how you found these 10 to 20 rows and why these rows are your most problematic. Top answers will use categories and/or words that I did not discuss in class, clearly discuss why these categories/words were problematic, and how the group selected these.
+
+**Using the pattern of problematic words and safe_words created a summary of problematic words and eliminated the false positives. Then we focused on the high value items (>800). Our group also added more problematic and safe words based on observations of the data such as "CONVENTION|CONFERENCE|\\bPRIME\\b|MEMBERSHIP|GIFT|DECORATIONS|DATA PLAN|PREPAYMENT|DEPOSIT|DONATION|INCENTIVE AWARD|EMPLOYEE SERVICE|GASOLINE|FUEL|SALES TAX|MOVING EXPENSE|PERSONAL|HEALTH CARE|CANDY|FLOWERS|GREETING CARD|LATE FEES|REBATES|REWARDS|CASH BACK|SPLIT PURCHASE|SALARY|WAGES|BENEFITS" for problematic words and "BDH|ALCOHOL DISPENSER|UNIVERSITY|RANCHERS CLUB|UNIVERSITY DINING|RENTAL CAR|RENTAL VEHICLE|LAB|LAWN|INSTITUTIONAL" for safe words. We believe these words were most problematic because they were most frequently recurring and high dollar value.** 
+
+* 1d. In one or two paragraphs, describe what questions you would ask management in order to determine if these transactions are indeed violation of the P-Card controls (that is, they are prohibited goods, services, and/or prohibited "MCC's"). Top answers will have specific questions for management, e.g., "when are ____ purchases allowed," etc.
+
+1.	When are uniforms purchases allowed?
+2.	When are stamps purchases allowed?
+3.	When are book purchases allowed?
+4.	When are health insurance premium payments allowed?
+5.	When are alternative accommodation payments allowed, such as campgrounds in lieu of hotels?
+
+### Part 2 - Apple's MD&A Sentiment Analysis
+
+```{r}
+# load packages
+library(tidytext)
+library(SnowballC)
+library(wordcloud)
+library(Rcpp)
+library(RColorBrewer)
+library(textdata)
+
+# read the files into the markdown file
+mda <- read_file("MDA.txt")
+press_release <- read_file("press_release.txt")
+
+nchar(mda)
+nchar(press_release)
+```
+
+* 2a. Following the code from the Coursera video, make the MD&A text a tibble, tokenize the string into words, remove stop words, and add sentiment. Then, graph the percentages of the sentiment categories in a stacked bar chart, as done in the Coursera video.
+
+```{r}
+# Tokenize the text
+# charge to a tibble (tidy dataframe)
+mda_tokens <- tibble(mda)
+
+# tokenize
+mda_tokens <- mda_tokens %>% tidytext::unnest_tokens(output=word, input=mda, token='words', to_lower=T)
+
+# add order of words
+mda_tokens <- mda_tokens %>% mutate(order = row_number())
+
+# count the number of matches of a substring
+mda_tokens %>% dplyr::filter(word == str_sub('covid')) %>% count()
+
+# location of the keyword mentioned
+mda_tokens %>% dplyr::filter(word == str_sub('covid'))
+```
+
+```{r}
+# Remove stop words
+# load custom stopwords
+custom_stop_words <- read_csv("stop_words_list.csv", col_names = F)
+
+# remove stop words
+mda_tokens <- mda_tokens %>%
+  anti_join(custom_stop_words, by = c('word'='X1'))
+
+mda_tokens %>% nrow()
+
+mda_tokens %>%
+  group_by(word) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  filter(count > 20) %>%
+  mutate(token = reorder(word, count)) %>%
+  ggplot(aes(x=count, y=token)) + geom_col()
+
+```
+
+```{r}
+# Stemming and Lemmatizing
+# stem the tokens
+mda_stemmed <- mda_tokens %>% mutate(stem = SnowballC::wordStem(word))
+
+# look at similar words
+arrange(mda_stemmed, word)[316:325,]
+
+mda_stemmed %>%
+  group_by(stem) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  filter(count > 20) %>%
+  mutate(token = reorder(stem, count)) %>%
+  ggplot(aes(x=count, y=token)) + geom_col()
+```
+
+```{r}
+# Key words
+set.seed(77)
+
+mda_stemmed %>%
+  group_by(word) %>%
+  summarize(count = n()) %>%
+  with(wordcloud(words=word, freq=count, min.freq=1, max.words=100, random.order=F, rot.per=0.30, colors=brewer.pal(8, "Dark2")))
+```
+
+```{r}
+# Sentiment total
+# load finance sentiment list and explore it
+lm_dict <- tidytext::get_sentiments('loughran')
+
+# view dictionary
+lm_dict %>% group_by(sentiment) %>% summarize(count = n())
+
+# add sentiment
+mda_sentimented <- mda_stemmed %>%
+  inner_join(lm_dict, by = 'word')
+
+# explore totals
+mda_sentimented %>% group_by(sentiment) %>% summarize(count = n())
+
+mda_sentimented %>%
+  group_by(sentiment) %>%
+  summarize(count = n(), percent = count/nrow(mda_sentimented)) %>%
+  ggplot(aes(x='', y=percent, fill=sentiment)) +
+  geom_bar(width=1, stat='identity')
+```
+
+
+* 2b. Do the same thing for the press release.
+
+```{r}
+# Tokenize the text
+# charge to a tibble (tidy dataframe)
+pr_tokens <- tibble(press_release)
+
+# tokenize
+pr_tokens <- pr_tokens %>% tidytext::unnest_tokens(output=word, input=press_release, token='words', to_lower=T)
+
+# add order of words
+pr_tokens <- pr_tokens %>% mutate(order = row_number())
+
+# count the number of matches of a substring
+pr_tokens %>% dplyr::filter(word == str_sub('coivd')) %>% count()
+
+# location of the keyword mentioned
+pr_tokens %>% dplyr::filter(word == str_sub('covid'))
+```
+
+```{r}
+# Remove stop words
+pr_tokens <- pr_tokens %>%
+  anti_join(custom_stop_words, by = c('word'='X1'))
+
+pr_tokens %>% nrow()
+
+pr_tokens %>%
+  group_by(word) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  filter(count > 3) %>%
+  mutate(token = reorder(word, count)) %>%
+  ggplot(aes(x=count, y=token)) + geom_col()
+
+```
+
+```{r}
+# Stemming and Lemmatizing
+# stem the tokens
+pr_stemmed <- pr_tokens %>% mutate(stem = SnowballC::wordStem(word))
+
+# look at similar words
+arrange(pr_stemmed, word)[1:20,]
+
+pr_stemmed %>%
+  group_by(stem) %>%
+  summarize(count = n()) %>%
+  arrange(desc(count)) %>%
+  filter(count > 3) %>%
+  mutate(token = reorder(stem, count)) %>%
+  ggplot(aes(x=count, y=token)) + geom_col()
+```
+
+```{r}
+# Key words
+set.seed(77)
+
+pr_stemmed %>%
+  group_by(word) %>%
+  summarize(count = n()) %>%
+  with(wordcloud(words=word, freq=count, min.freq=1, max.words=100, random.order=F, rot.per=0.30, colors=brewer.pal(8, "Dark2")))
+```
+
+```{r}
+# Sentiment total
+# load finance sentiment list and explore it
+lm_dict <- tidytext::get_sentiments('loughran')
+
+# view dictionary
+lm_dict %>% group_by(sentiment) %>% summarize(count = n())
+
+# add sentiment
+pr_sentimented <- pr_stemmed %>%
+  inner_join(lm_dict, by = 'word')
+
+# explore totals
+pr_sentimented %>% group_by(sentiment) %>% summarize(count = n())
+
+pr_sentimented %>%
+  group_by(sentiment) %>%
+  summarize(count = n(), percent = count/nrow(pr_sentimented)) %>%
+  ggplot(aes(x='', y=percent, fill=sentiment)) +
+  geom_bar(width=1, stat='identity')
+
+
+```
+
+* 2c. After examining both of these text transcripts (MD&A and Press Release), use one or two paragraphs to explain several reasons for how and why these graphs are different. Be sure to mention how the percentage of sentiment differs between the two text strings and why you think they differ. Hint: To have a good reason for why they might have a different sentiment, you may need to research the purpose of the MD&A section and the purpose of the press release. You could also read the text and gain an understanding that way. These open ended answers will be graded on quality and not quantity (after meeting the minimum length). Exceptional answers will be specific, concise, insightful, and will utilize important insights from our classroom materials and from outside the classroom.
+
+**Press releases are meticulously crafted to portray the company in the best possible light while remaining legally accurate and able to withstand auditing standards.**
+
+**On the other hand, Management Discussion & Analysis is not auditable and reflects unscripted thoughts from the management team. These more off-the-cuff opinions may reveal underlying issues or uncertainties within the company. The sentiment analysis for Apple’s press release is overwhelmingly positive, with 25% uncertainty, while the MD&A sentiment analysis reveals a more complex, and likely more realistic, situation. In MD&A, uncertainty has increased significantly, and much of the positivity is replaced with a significant amount of negativity, followed by constraining and litigious sentiments.**
