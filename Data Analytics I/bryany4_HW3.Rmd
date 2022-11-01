@@ -1,0 +1,93 @@
+---
+title: "Homework 3"
+output:
+  html_document: default
+  pdf_document: default
+date: '2022-04-20'
+---
+
+1. Read in the ities.csv datafile as a dataframe object, df.  
+
+```{r}
+df <- read.csv('ities.csv'
+               , stringsAsFactors = T)  #read in the dataframe and name it as df
+```
+
+2. (1 point) Display the number of rows and columns in the dataset using an appropriate R function. Below the output, identify which numbers from the output correspond to the number of rows and columns. 
+
+```{r}
+nrow(df)                               # df rows
+ncol(df)                               # df columns
+dim(df)                                # df rows x columns
+```
+**dim(df) = rows x columns**
+
+3. (1 point) Display the structure of the dataframe, df. Below the output, briefly summarize two main points about the dataframe structure. 
+
+```{r}
+#Displaying the structure of the dataframe
+str(df)
+```
+
+**Brief Summary of Two Main Points**
+
+*1. This data frame structure summarizes single transaction on each row with 13 different columns or variables ranging from Date to Total Due.*
+
+*2. This data frame structure could be reorganized to better structure. For examples, category and line item are very similar to each other or identical in some cases. They could be separated or combined to better organize the data.*
+
+4. (2 points) Display a summary of the columns in df. Below the output, comment on at least two columns for which the existing data type is not useful for the summary function, the format to which they should be changed, and why that change would be helpful.*
+
+```{r}
+#summry of the columns in df (chr to fctr).
+summary(df)
+```
+
+*1. The dataframe's default data type was character from Date to CustomerCode. Which showed the character as the column summary. Converting the data type to factors made the data frame structure more helpful to interpret and analyze the data.*
+
+*2. The columns RegisterName, StoreNumber and CustomerCode could be improved by changing to what it represent such as actual location (Factors), simplified store number (Factors), interpretation of customer code (Factors). The data dictionary does not cover the comprehensive meaning of the each code and number to make it helpful for analysis.*
+
+5. (3 points) Convert the values in Department and LineItem columns to lower case and save them as new columns, Department_lower and LineItem_lower. Display the first five rows of only those four columns, Department, Department_lower, LineItem, and LineItem_lower to verify that the case conversion worked. 
+
+```{r}
+#install.packages('stringr')
+library(stringr)
+
+#Creating new lower chase columns in df for columns Department & LineItem.
+df$Department_lower <- str_to_lower(df$Department)
+df$LineItem_lower <- str_to_lower(df$LineItem)
+
+#Confirmation Display for the lower case conversions.
+df[1:5, c('Department', 'Department_lower', 'LineItem', 'LineItem_lower')]
+```
+
+6. (2 points) Use the “plot” function on Department_lower, and then run that code chunk. You will get an error. Below the output, describe the reason for the error. Then make sure and comment out this code chunk by placing a hashtag/pound sign on the far left of the line of code. If you don’t comment out code that contains an error, then the markdown file will not be able to knit to an html file. 
+
+#```{r}
+#Error messages of ploting due to data type of the column.
+plot(df$Department_lower)
+#```
+
+*The Department_lower's data type is character. Therefore, when we try to plot the data, it cannot plot unless we convert the character types to factors.*
+
+7. (3 points) Convert the datatype of Department_lower to a factor type. Do not create a new column, just convert it in place. Display the structure of the dataframe, df, to verify that the Department_lower column is a factor data type. Beneath the output, indicate how many levels there are in the Department_lower column. 
+
+```{r}
+df$Department_lower <- factor(df$Department_lower)
+str(df)
+```
+*As shown above, there are 9 levels in the Department_lower column.*
+
+8. (5 points) Use the “plot” function on the Department_lower column to display a plot of that column from most frequent on the left to least frequent on the right. Below the output, identify the department that occurs most frequently, as well as the one that occurs least frequently.   
+  1. It may be hard for you to read the names of all of the departments from the plot. You may        have to add additional code to adjust the plot or to print out additional summary information     so that you can identify the Departments that appear most/least frequently. Make sure that        your comments are supported by the code that is displayed. 
+  
+```{r}
+#installing forcats to utilize the function to reorder the dataframe with ease.
+#install.packages('forcats')
+library(forcats)
+
+#converting Department_lower to display from most frequent on the left to least frequent on the right with 9 levels of departments including others.
+df$Department_lower <- fct_infreq(fct_lump(df$Department_lower, n = 9))
+plot(df$Department_lower)
+```
+
+

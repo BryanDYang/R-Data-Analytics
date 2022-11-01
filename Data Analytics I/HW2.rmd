@@ -1,0 +1,89 @@
+---
+title: "HW2"
+author: "Bryan Yang"
+date: "4/26/2022"
+output:
+  html_document: default
+---
+
+## Task 1  
+
+Read in the ities.csv datafile as a dataframe object, __df__. 
+
+```{r}
+df <- read.csv('ities.csv', stringsAsFactors = F, header = T)
+```
+
+_No descriptive answer is needed here._
+
+## Task 2  
+
+__(2 points) Display the count of rows and columns in the dataframe using an appropriate R function. Below the output, identify the count of rows and the count of columns.__  
+
+```{r}
+# Count of rows and the count of columns: Dimension
+dim(df)
+# Count of rows
+nrow(df)
+# Count of columns
+ncol(df)
+```
+
+This dataframe has x rows and y columns.
+
+## Task 3  
+
+__(3 points) Use the appropriate R function to display the structure (i.e., number of rows, columns, column names, column data type, some values from each column) of the dataframe, df. Below the output, briefly summarize two main points about the dataframe structure.__
+
+```{r}
+# Structure of Dataframe, df
+str(df)
+```
+
+### Two main points about the dataframe structure:
+* Columns are of different data types (chr, int, and num).
+* The row of the dataframe shows line item being sold with column displaying different information about the transaction.
+
+## Task 4  
+
+__(6 points) True or False: Every transaction is summarized in one row of the dataframe. Display at least one calculation in the code chunk below. Below the calculation(s), clearly indicate whether the statement is true or false and explain how the output of your calculation(s) supports your conclusion.__
+
+```{r}
+df[1,]
+df[10,]
+df[100,]
+df[1000,]
+df[10000,]
+df[100000,]
+df[400000,]
+
+```
+
+### Outcome of Calculation(s):
+* True, every transaction is summarized in one row of the dataframe as shown above. Selected sample rows: 1, 10, 100, 1000, 10000, 40000, all display summary of every transaction.
+
+## Task 5  
+
+__(3 points) Display the summaries of the Price, Quantity and TotalDue columns. Below the output, provide a brief interpretation of the output for each column.__
+
+```{r}
+df[1:5,c('Price','Quantity','TotalDue')]
+
+```
+### Outcome of display:
+* Price column shows price of the line item sold.
+* Quantity column shows number of units of the line item sold.
+* TotalDue column shows product of price per unit and quantity sold.
+ 
+## Task 6  
+
+__(6 points) Display the boxplots of the log values for the Price, Quantity and TotalDue columns. Below the output, provide a brief description of three insights that you see in the boxplots. As part of your description, indicate how the output from task 5 relates to the boxplots in this task.__
+
+```{r}
+boxplot(log(df[, c('Price', 'Quantity', 'TotalDue')]))
+```
+
+### Key Insights of the Boxplots:
+* Price and TotalDue are almost identical on the boxplot because quantity median and mean are very centralized with minimal deviations. 
+* The table from Task 5 shows Price and TotalDue being almost equal other than row 3 because quantity is 2 hence doubling the TotalDue from Price. This principle applies to entire dataframe.
+* The dataframe column Price and TotalDue has negative values from returns. This seems to seldom outliers compared to the main boxplot.
