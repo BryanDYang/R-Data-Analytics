@@ -1,0 +1,182 @@
+---
+title: "Divvy"
+author: "Michael R. Mercado"
+date: "6/6/2022"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## LOAD PACKAGES
+```{r}
+library(lubridate)
+library(stringi)
+library(magrittr)
+library(tidyverse) # For lots of data wrangling tasks
+```
+
+## Read in the data.
+```{r}
+df_01_22 <- read.csv('Jan22_divvy_tripdata.csv', stringsAsFactors = F, header = T)    
+# Reading in the January 2022 Divvy data as a dataframe called df_01_22
+df_02_22 <- read.csv('Feb22_divvy_tripdata.csv', stringsAsFactors = F, header = T)     
+# Reading in the February 2022 Divvy data as a dataframe called df_02_22
+df_03_22 <- read.csv('Mar22_divvy_tripdata.csv', stringsAsFactors = F, header = T)     
+# Reading in the March 2022 Divvy data as a dataframe called df_03_22
+df_04_22 <- read.csv('Apr22_divvy_tripdata.csv', stringsAsFactors = F, header = T)     
+# Reading in the April 2022 Divvy data as a dataframe called df_04_22
+df_05_22 <- read.csv('May22_divvy_tripdata.csv', stringsAsFactors = F, header = T)     
+# Reading in the May 2022 Divvy data as a dataframe called df_05_22
+```
+
+## Merge the Data
+```{r}
+df_Merged <- rbind(df_01_22, df_02_22, df_03_22, df_04_22, df_05_22)
+```
+
+## Structure of the Data
+```{r}
+str(df_Merged) 
+```
+
+## Check Missing Valaues
+```{r}
+colSums(is.na(df_Merged)) # Check if there are missing values 
+```
+
+## Remove Missing Valaues
+```{r}
+df_cleaned <- na.omit(df_Merged)     # Removes rows containing missing values
+colSums(is.na(df_cleaned)) # Check to make sure the missing values are no more.
+```
+## Convert the Started_At column from character string object into a date-time object
+```{r}
+df_cleaned <- df_cleaned %>% # Object will be converted from a character string to a date time object
+    mutate(
+    started_at = ymd_hms(started_at)
+   ) 
+```
+
+## Convert the Ended_At column from character string object into a date-time object
+```{r}
+df_cleaned <- df_cleaned %>% # Object will be converted from a character string to a date time object
+    mutate(
+    ended_at = ymd_hms(ended_at)
+   ) 
+```
+
+## Unique Valaues for Rideable Type
+```{r}
+unique(df_cleaned$rideable_type)
+```
+
+## Unique Valaues for Member Casual
+```{r}
+unique(df_cleaned$member_casual)
+```
+
+## Create Two Columns for Calculated Trip Duration, One Column in Trip Minutes and Second Column in Trip Hours
+```{r}
+df_triptime <- df_cleaned
+
+df_triptime <- df_triptime %>%
+  mutate(
+          trip_time_min = as.numeric(difftime(df_triptime$ended_at, df_triptime$started_at), units = "mins"),
+          trip_time_hrs = as.numeric(difftime(df_triptime$ended_at, df_triptime$started_at), units = "hours")
+         )
+```
+
+## For Any Trip With a Duration Less Than or Equal To Zero Minutes or Greater Than 3 Hours Replace with NA's
+```{r}
+df_triptime$trip_time_hrs <- replace(df_triptime$trip_time_hrs, which(df_triptime$trip_time_hrs <= 0.167), NA)
+df_triptime$trip_time_hrs <- replace(df_triptime$trip_time_hrs, which(df_triptime$trip_time_hrs > 3), NA)
+```
+
+## Remove Rows with Missing Valaues
+```{r}
+df_triptime <- na.omit(df_triptime)     # Removes rows containing missing values
+colSums(is.na(df_triptime)) # Check to make sure the missing values are no more.
+```
+
+## Structure of the Data
+```{r}
+str(df_triptime) 
+```
+## Box plot For Trip Time By User Type For Trips <= 3 hours
+```{r}
+ggplot(df_triptime, aes(x=member_casual, y=trip_time_hrs)) + 
+  geom_boxplot() +
+      labs(title = 'Box Plot-Trip Time Duration (Max 3 Hours) By Type of User')
+```
+## Filter Data for Trips Up to 1 Hour
+```{r}
+df_onehourtrips <- df_triptime
+df_onehourtrips$trip_time_hrs <- replace(df_onehourtrips$trip_time_hrs, which(df_onehourtrips$trip_time_hrs <= 0.167), NA)
+df_onehourtrips$trip_time_hrs <- replace(df_onehourtrips$trip_time_hrs, which(df_onehourtrips$trip_time_hrs > 1), NA)
+```
+
+## Remove Rows with Missing Valaues
+```{r}
+df_onehourtrips <- na.omit(df_onehourtrips)     # Removes rows containing missing values
+colSums(is.na(df_onehourtrips)) # Check to make sure the missing values are no more.
+```
+
+## Box plot For Trip Time By User Type For Trips <= 1 hour
+```{r}
+ggplot(df_onehourtrips, aes(x=member_casual, y=trip_time_hrs)) + 
+  geom_boxplot() +
+      labs(title = 'Box Plot-Trip Time Duration (Max 1 Hour) By Type of User')
+```
+
+## Filter Data for Only Casual Riders
+```{r}
+df_casual <- df_triptime %>% 
+  filter(df_triptime$member_casual=="casual")
+```
+
+## Export Output of Causal Rider Data
+```{r}
+write.csv(df_casual,"CasualCleaned.csv", row.names = TRUE)
+```
+
+## Filter Data for Only Member Riders
+```{r}
+df_member <- df_triptime %>% 
+  filter(df_triptime$member_casual=="member")
+```
+
+## Group Data to See Distribution for Stations Among Casual Riders from their Start Stations
+```{r}
+df_casual_startedat_stations <- df_casual %>% group_by(start_station_id) %>% count(start_station_id) %>% arrange(desc(n)) %>% slice(1:10) 
+```
+
+## Group Data to See Distribution for Stations Among Casual Riders Form The End Stations
+```{r}
+df_casual_endedat_stations <- df_casual %>% group_by(end_station_id) %>% count(end_station_id) %>% arrange(desc(n)) %>% slice(1:10) 
+```
+
+## Export Data Set 1
+```{r}
+write.csv(df_casual_startedat_stations,"Casual_Start_Stations.csv", row.names = TRUE)
+```
+
+## Export Data Set 2
+```{r}
+write.csv(df_casual_endedat_stations,"Casual_End_Stations.csv", row.names = TRUE)
+```
+
+## Box plot For Trip Time By User Type
+```{r}
+ggplot(df_member, aes(x=rideable_type, y=trip_time_hrs)) + 
+  geom_boxplot() +
+      labs(title = 'Box Plot-Trip Time Duration By Type of Bike Used for Members')
+```
+
+## Box plot For Trip Time By Bike Type
+```{r}
+ggplot(df_casual, aes(x=rideable_type, y=trip_time_hrs)) + 
+  geom_boxplot() +
+      labs(title = 'Box Plot-Trip Time Duration By Type of Bike Used for Casual Riders')
+```
+
+
