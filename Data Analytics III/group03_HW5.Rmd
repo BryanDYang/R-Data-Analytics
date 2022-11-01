@@ -1,0 +1,119 @@
+---
+title: "HE Assignment 5 – Regression"
+author: Shawn Abdian, Lexie Brown, Jenna Swiecki, Carolina Trevino, Saeeda Zaman,Bryan Yang
+date: "07/12/22"
+output: html_document
+---
+
+# Overview     
+In this assignment you will practice using the regression algorithm to create a model for explaining the interest rate for home loans that were granted in the state of Illinois.       
+
+### Requirements        
+
+1. (1 point) Create a new RMD file in RStudio and use a code chunk to complete the following tasks:
+Load the following libraries: tidyverse, magrittr, lubridate, and corrplot packages. (You may need to install those libraries if you have not already done so.)
+
+```{r}
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(jtools)
+library(ggstance)
+library(huxtable)
+library(corrplot)
+```
+
+  + Read in the hmdaInterestRate.rds file.
+
+```{r}
+df1 <- read_rds('hmdaInterestRate.rds')
+```
+
+  + Report the structure of the dataframe. (No need to comment on the structure.)
+
+```{r}
+str(df1)
+```
+
+2. (1 point) Data preparation:
+Replace the values in the following columns with the same value divided by 1,000: loan_amount, property_value, and income. (This will make it easier to see the impact on the interest rate.)
+
+```{r}
+df1$loan_amount <- df1$loan_amount / 1000
+df1$property_value <- df1$property_value / 1000
+df1$income <- df1$income/ 1000
+```
+
+  + Create a new column, ltp, that is equal to the values in the loan_amount column divided by the values in the property_value column.
+
+```{r}
+df1$ltp = df1$loan_amount / df1$property_value
+```
+
+  + Filter the data to keep observations for which income is less than 300 (i.e., $300,000).
+
+```{r}
+df2 <- df1 %>% filter(income < 300)
+```
+
+  + Report a summary of all columns. (No need to comment on the summary of the columns.)
+
+```{r}
+summary(df2)
+```
+
+3. (1 point) Create a correlation plot of the following columns: interest_rate, ltp, income, applicant_age, property_value, and loan_amount.
+
+```{r}
+cdf2 <- cor(df2 %>% select(interest_rate, ltp, income, applicant_age, property_value, loan_amount))
+cdf2
+```
+
+
+```{r}
+corrplot(cdf2
+         , method = 'color' #pie and ellipse
+         , order = 'hclust' #orders the variables so that ones that behave similarly are placed next to each other
+         , addCoef.col = 'black' 
+         , number.cex = .6  #lower values decrease the size of the numbers in the cells
+         )
+```
+
+  + Below the plot, identify what variable has the strongest negative correlation with interest_rate. Comment on what might explain why that correlation is negative.
+
+**Interest rate and loan amount have the strongest negative correlation with each other. We can also see the similar correlation with loan to property value with interest rate signaling cheaper properties have higher loan to property ratios than pricier properties. In contrast we can see higher income is positively correlated with property value and loan amount. Typically, larger down payment lowers the interest rate for the loan. These correlations explain high income earners, who are buying more expensive properties, are likely to pay more down payments to get the most optimal interest rates possible than lower income earners who don't have this option hence strong negative correlation between interest rate and loan amount.**
+
+Interest rate and loan amount have the strongest negative correlation with each other. The explanation may be due to the interest rate sensitivity. As te demand increases within the macro economy the more likely the fed is to 
+
+4. (1 point) Regress interest_rate on ltp. Interpret the coefficient estimate on ltp.
+
+```{r}
+lm1 <- lm(interest_rate ~ ltp, data = df2)
+summary(lm1)
+```
+
+__Regressing interest rate on loan to property value (ltp), the coefficient estimates are 5.319 and -1.052 respectively with statistical significance. Using these parameters from regression, we can have the following linear model:$\textrm{interest_rate} = -1.052*\textrm{ltp} + 5.319$.__    
+
+__The R squared is 0.102 or 10% of interest rate can be explained by ltp.__     
+
+5. (3 points) Regress interest_rate on ltp and loan_amount. Comment on the change in the adjusted R-squared, as well as the change in the coefficient on ltp.
+
+```{r}
+lm2 <- lm(interest_rate ~ ltp + loan_amount, data = df2)
+summary(lm2)
+```
+__Regressing interest rate on loan to property value (ltp) and loan amount, the coefficient estimates are 5.385, -0.737, and -0.002 respectively with statistical significance on all three coefficients. Using these parameters from regression, we can have the following linear model: $\textrm{interest_rate} = -0.737*\textrm{ltp} -0.002*\textrm{loan_amount} + 5.385$. Also, ltp coefficient has changed when loan_amount was added from -1.052 to -0.737.__
+
+__The Adjusted R squared of this multiple regression is 0.152 compared to 0.102 from the previous simple regression's R squared. This means 15% of interest rate can be explained by combination of ltp and loan amount.__
+
+6. (3 points) Regress interest_rate on ltp, loan_amount, and aus_1. Interpret the change in adjusted R-squared, as well as the coefficients for each independent variable.
+
+```{r}
+lm3 <- lm(interest_rate ~ ltp + loan_amount + aus_1, data = df2)
+summary(lm3)
+```
+__Regressing interest rate on loan to property value (ltp), loan amount and aus_1(Not applicable, LP, Technology open to Approved Lenders Scored Card, Guaranteed Underwriting System, and Other), the coefficient estimates of the intercept are are 4.589, 0.025, -0.002, and (0.905, 0.007, 0.167, -0.327, 0.403) respectively with statistical significance on majority of the independent variables' coefficients.__
+
+__ltp is now positive, increasing from -0.737 to 0.025, but no longer statistically significant. loan_amt increased slightly from -0.0021 to -0.0017. The y-intercept initially decreased from 5.385 to 4.589, but was then increased by the dummy variables from aus_1 to 5.635. It should be noted that Loan Prospector and Guaranteed Underwriting System are not statistically significant. The insignificant variables should be removed from the model and rerun the regression.__
+
+__The Adjusted R squared of this multiple regression is 0.2667 compared to 0.152 from the previous multiple regression's adjusted R squared. This means 27% of interest rate can be explained by combination of the independent variables from the model.__

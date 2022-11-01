@@ -1,0 +1,142 @@
+---
+title: "Module 3 Individual Assignment"
+author: "Bryan Yang"
+date: '2022-06-21'
+output: html_document
+---
+
+# Overview
+
+In this assignment, you are going to explore data from the convenience store retail giant NANSE. NANSE owns over seven hundred small-form convenience stores throughout Canada. This dataset only includes sales from 2015 for food and beverage. It also excludes alcohol and tobacco. Each row represents the weekly average for one store for all of 2015. Thus, each row in the data represents the average weekly results for that one store for the whole year. You are going to use EDA to investigate different features of these data.
+
+# ETL (Extract, Transform, Load) Tasks:
+
+```{r}
+library(tidyverse) # load tidyverse.
+```
+
+### 1. Import the `store_3HE.csv' as dataframe df. And learn about the data from the Data_description_store_3HE.xlsx  Download Data_description_store_3HE.xlsx to an external site.
+
+```{r}
+df <- read.csv('store_3HE.csv', stringsAsFactors = TRUE) #read csv.
+```
+
+### 2. (0.5 points) Familiarize yourself with the features of the data by using the `str()`, `summary()`, `head()`, `tail()`, `slice_sample()`, `unique()`, and `n_distinct()` functions. Give a brief summary of what you learn (just two or three sentences). Note - A few of these functions are from the package “dplyr”. Thus, load “dplyr” or the meta-package “tidyverse” into your RStudio notebook. The package “tidyverse” is used in each R notebook we will work with, so, you will see it often.
+
+```{r}
+str(df) #Look at the data first and understand what we have - 'str()' function.
+```
+
+```{r}
+summary(df) #Look at the data first and understand what we have - 'summary()' function.
+```
+
+```{r}
+head(df, n=10) #Look at the data first and understand what we have - 'head()' function.
+```
+
+```{r}
+tail(df, n=10) #Look at the data first and understand what we have - 'tail()' function.
+```
+
+```{r}
+slice_sample(df, n=10) #Look at the data first and understand what we have - 'slice_sample()' function.
+```
+
+```{r}
+#unique(df) #Look at the data first and understand what we have - 'unique()' function.
+```
+
+```{r}
+n_distinct(df) #Look at the data first and understand what we have - 'n_distinct()' function.
+```
+
+**Seems like there are 20 columns and 771 rows of stores. The structure and summary of the dataframe, the revenue should be numeric data type in order for n_distinct and unique functions to work properly.There are NA's and Unknowns in the dataframe (City and Province) excluding Revenue.**
+
+### 3. (0.5 points) Convert the values in the `revenue` column to a numeric data type.
+
+```{r}
+df$revenue <- as.numeric(df$revenue) #convert the values in the revnue column to a numeric data type.
+str(df$revenue)                     #check structure.
+summary(df$revenue)                 #check summary.
+```
+
+### 4. (0.5 points) Delete rows that contain missing values in any of the columns.
+
+```{r}
+df_clean <- df %>% na.omit            #Delete rows that contain missing values in any of the col.
+df_clean <- df_clean %>% drop_na()    #Second delete of rows that contain missing values.
+```
+
+# EDA (Exploratory Data Analysis) Tasks:
+
+### 5. (1 point) We are interested in understanding what factors influence the revenue for an individual store. From dataframe df, create two dataframes df_low and df_high such that df_low contains data on all the stores with revenue less than the average revenue for the complete data and df_high contains data on all the stores with revenue equal or greater than the average revenue for the complete data. Calculate the average size of the stores in the two dataframes (df_lows and df_high) and comment on the relationship between revenue and size of the stores by discussing the two means (just one or two sentences).
+
+```{r}
+df_lows <- df_clean %>% filter(revenue < mean(revenue, na.rm = TRUE))  #filter rev less than the avg rev.
+df_high <- df_clean %>% filter(revenue >= mean(revenue, na.rm = TRUE)) #filter rev more & equal to avg rev.
+mean(df_lows$size)                                                    #print avg lows.
+mean(df_high$size)                                                    #print avg high.
+```
+
+**Based on the calculation of the average size of the stores in the two dataframes (df_lows and df_high), the relationship between revenue and size of the stores is positively correlated because higher revenue stores are bigger than lower revenue stores in average based on the calculated two size means above.**
+
+### 6. (1.5 points) Report and comment on the correlation between revenue and size. First, calculate the correlation between revenue and size in the main dataframe. Next, using the `ggplot()` function, plot the relationship between the revenue and size using an appropriate chart. Finally, discuss in one or two sentences.
+
+```{r}
+#plot bar chart for size and revenue.
+ggplot(df_clean, aes(x=size, y=revenue)) +
+  geom_col() +
+  labs(title = 'Bar Chart- Revenue and Size')
+```
+
+**Overall, the bar plot illustrates negatively skewed bell curve. Based on the chart above, the size has positive effect until approximately 900s reaching above 4000 in revenue. However, there seems to be a trend of diminishing return after the absolute maximum point.**
+
+### 7. (1.5 points) Create boxplots of revenue for each region and comment on the distribution of revenue within each region (in one or two sentences).
+
+```{r}
+#plot boxplot for revenue and region.
+ggplot(df_clean, aes(x=region, y=revenue)) +
+  geom_boxplot () +
+  labs(title = 'Box Plot-Revenue by Region')
+```
+
+**Based on the box plot, Quebec region seems to have the least variable in revenues per store as well as having the highest median revenue stores out of all the regions. West region has the most variability for its store revenues. Both Atlantic and Ontario have lower medians compared to Quebec and West regions.**
+
+### 8. (1.5 points) Calculate the correlation between the revenue and promo_units and comment on whether the value aligns with your expectation. Based on this value of correlation, can you conclude that selling units on promotion helps in increasing revenue? Please explain your reason for the conclusion in a few sentences.
+
+```{r}
+#plot points for promo units and revenue.
+ggplot(df_clean, aes(x=promo_units, y=revenue)) +
+  geom_point() +
+  labs(title = 'Scatter Plot-Revenue and Promo Units')
+```
+
+**Based on the scatter plot above, we can observe the positive correlation between revenue and promo units. Therefore, we can conclude that selling units on promotion has an empirical evidence of aiding in increased revenue for stores. However, there are enough outliers that need to be further analyzed for the validity of this correlation.**
+
+### 9. (1.5 points) Create a bar chart that shows total gross_profit for each province. Comment on a few findings from the chart in one or two sentences.
+
+```{r}
+#plot bar chart for total gross proft and province.
+ggplot(df_clean, aes(x=province, y=gross_profit)) +
+  geom_col() +
+  labs(title = 'Bar Chart-Total Gross Profit and Province')
+```
+
+**Based on the bar chart above, it is clear that ON has the most total gross profit out of all province with +40,000 in gross profit. AB and QC came in second and third places with +20,000 and +18,000 respectively. SK, MB, NB and PE provinces had the lowest gross profits.**
+
+### 10. (1.5 points) Create a correlation matrix for showing correlations among the average store sales for all product categories. Which two product categories sell together the least and which sell together the most?
+
+```{r}
+#create separate dataframe for matrix including revenue or sales and all product categories. 
+df_matrix <- df_clean %>% select(-store, -city, -region, -province, -size, -units, -cost, -gross_profit)
+#create matrix for correlation
+df_cor <- cor(df_matrix)
+min(df_cor)
+
+#install package corrplot
+#install.packages("corrplot")
+corrplot::corrplot(df_cor)
+```
+
+**Based on the df_cor matrix and correlation plot above, PSD591MI and Gum units sell together the least (0.58) and Promo and Isotonics units sell together the most (0.95).**

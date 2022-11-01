@@ -1,0 +1,575 @@
+<?xml version="1.0"?>
+<AlteryxDocument yxmdVer="2022.1">
+  <Nodes>
+    <Node ToolID="1">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.DbFileInput.DbFileInput">
+        <Position x="54" y="66" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Passwords />
+          <File RecordLimit="" SearchSubDirs="False" FileFormat="0" OutputFileName="FileName">C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv</File>
+          <FormatSpecificOptions>
+            <HeaderRow>True</HeaderRow>
+            <IgnoreErrors>False</IgnoreErrors>
+            <AllowShareWrite>False</AllowShareWrite>
+            <ImportLine>1</ImportLine>
+            <FieldLen>254</FieldLen>
+            <SingleThreadRead>False</SingleThreadRead>
+            <IgnoreQuotes>DoubleQuotes</IgnoreQuotes>
+            <Delimeter>,</Delimeter>
+            <QuoteRecordBreak>False</QuoteRecordBreak>
+            <CodePage>28591</CodePage>
+          </FormatSpecificOptions>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>AAPL.csv</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+        <MetaInfo connection="Output">
+          <RecordInfo>
+            <Field name="Date" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="Open" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="High" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="Low" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="Close" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="Adj Close" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="Volume" size="254" source="File: C:\Users\rnguymon\MBA 563\Module 4 - Alteryx\filesForStudents\AAPL.csv" type="V_String" />
+            <Field name="FileName" size="254" source="File: FileName" type="V_WString" />
+          </RecordInfo>
+        </MetaInfo>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxDbFileInput" />
+    </Node>
+    <Node ToolID="2">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.AlteryxSelect.AlteryxSelect">
+        <Position x="174" y="66" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <OrderChanged value="False" />
+          <CommaDecimal value="False" />
+          <SelectFields>
+            <SelectField field="Date" selected="True" type="Date" size="10" />
+            <SelectField field="Open" selected="False" />
+            <SelectField field="High" selected="False" />
+            <SelectField field="Low" selected="False" />
+            <SelectField field="Close" selected="False" />
+            <SelectField field="Adj Close" selected="True" type="Float" size="4" />
+            <SelectField field="Volume" selected="False" />
+            <SelectField field="FileName" selected="True" rename="Ticker" />
+            <SelectField field="*Unknown" selected="True" />
+          </SelectFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxSelect" />
+    </Node>
+    <Node ToolID="3">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.MultiRowFormula.MultiRowFormula">
+        <Position x="294" y="66" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <UpdateField value="False" />
+          <UpdateField_Name>Date</UpdateField_Name>
+          <CreateField_Name>dailyReturn</CreateField_Name>
+          <CreateField_Type>Float</CreateField_Type>
+          <CreateField_Size>4</CreateField_Size>
+          <OtherRows>Empty</OtherRows>
+          <NumRows value="1" />
+          <Expression>LOG([Adj Close]/[Row-1:Adj Close])</Expression>
+          <GroupByFields />
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>LOG([Adj Close]/[Row-1:Adj Close])</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxMultiRowFormula" />
+    </Node>
+    <Node ToolID="5">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.Filter.Filter">
+        <Position x="462" y="66" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <Mode>Simple</Mode>
+          <Simple>
+            <Operator>IsNotNull</Operator>
+            <Field>dailyReturn</Field>
+            <Operands>
+              <IgnoreTimeInDateTime>True</IgnoreTimeInDateTime>
+              <DateType>fixed</DateType>
+              <PeriodDate>2021-06-29 21:06:29</PeriodDate>
+              <PeriodType>
+              </PeriodType>
+              <PeriodCount>0</PeriodCount>
+              <Operand>
+              </Operand>
+              <StartDate>2021-06-29 21:06:29</StartDate>
+              <EndDate>2021-06-29 21:06:29</EndDate>
+            </Operands>
+          </Simple>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText>!IsNull([dailyReturn])</DefaultAnnotationText>
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxFilter" />
+    </Node>
+    <Node ToolID="6">
+      <GuiSettings Plugin="PlotlyCharting">
+        <Position x="726" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <ChartingFields>
+            <Traces json:Array="true" xmlns:json="http://james.newtonking.com/projects/json">
+              <type>scatter</type>
+              <mode>lines</mode>
+              <xsrc>Date</xsrc>
+              <ysrc>RunTot_dailyReturn</ysrc>
+              <line>
+                <width>2</width>
+              </line>
+              <transforms json:Array="true">
+                <type>groupby</type>
+                <groupssrc>Ticker</groupssrc>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+                <groups>AAPL</groups>
+              </transforms>
+            </Traces>
+            <Layout>
+              <title>
+                <text>Cumulative Daily Return</text>
+              </title>
+              <font>
+                <family>sans-serif</family>
+              </font>
+              <autosize>false</autosize>
+              <width>700</width>
+              <height>849</height>
+              <showlegend>true</showlegend>
+              <hovermode>closest</hovermode>
+              <xaxis>
+                <range>2020-06-30</range>
+                <range>2021-06-29</range>
+                <autorange>true</autorange>
+                <title>
+                  <text>Date</text>
+                </title>
+                <type>date</type>
+              </xaxis>
+              <yaxis>
+                <range>-0.021341653866127477</range>
+                <range>0.53461402714108575</range>
+                <autorange>true</autorange>
+                <title>
+                  <text>RunTot_dailyReturn</text>
+                </title>
+                <type>linear</type>
+              </yaxis>
+              <margin>
+                <pad>0</pad>
+                <t>100</t>
+                <b>80</b>
+                <l>80</l>
+                <r>80</r>
+              </margin>
+            </Layout>
+          </ChartingFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="PortfolioPluginsEngine.dll" EngineDllEntryPoint="ComposerInteractiveCharting" />
+    </Node>
+    <Node ToolID="7">
+      <GuiSettings Plugin="AlteryxBasePluginsGui.RunningTotal.RunningTotal">
+        <Position x="582" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <GroupByFields />
+          <RunningTotalFields>
+            <Field field="dailyReturn" />
+          </RunningTotalFields>
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+      </Properties>
+      <EngineSettings EngineDll="AlteryxBasePluginsEngine.dll" EngineDllEntryPoint="AlteryxRunningTotal" />
+    </Node>
+    <Node ToolID="8">
+      <GuiSettings Plugin="PortfolioPluginsGui.ComposerRender.PortfolioComposerRender">
+        <Position x="858" y="54" />
+      </GuiSettings>
+      <Properties>
+        <Configuration>
+          <TempFileType />
+          <OutputFile>C:\Users\rnguymon\OneDrive - University of Illinois - Urbana\Desktop\dailyReturnAAPL.pdf</OutputFile>
+          <BatchMode value="False" />
+          <DataField>Chart</DataField>
+          <Separator>Continuous</Separator>
+          <EmbedDependencies value="False" />
+          <ShowHeader value="False" />
+          <ShowFooter value="False" />
+          <PortraitMode value="True" />
+          <PaperType Width="612" Height="792" Left="36" Right="36" Top="36" Bottom="36" />
+          <DefaultStyles>
+            <Style Name="TextStyle" FontName="Arial" FontSize="14" Justify="Left" ForeColor="#000000" Locale="1033" />
+          </DefaultStyles>
+          <PNGResolution>1</PNGResolution>
+          <PNGLargerAction>squeeze</PNGLargerAction>
+          <PNGLargerThanPageChoice>warning</PNGLargerThanPageChoice>
+          <PNGTransparentBG value="False" />
+          <PNGBackColor value="#ffffff" />
+        </Configuration>
+        <Annotation DisplayMode="0">
+          <Name />
+          <DefaultAnnotationText />
+          <Left value="False" />
+        </Annotation>
+        <Dependencies>
+          <Implicit />
+        </Dependencies>
+      </Properties>
+      <EngineSettings EngineDll="PortfolioPluginsEngine.dll" EngineDllEntryPoint="AlteryxPortfolioComposerRenderPlugin" />
+    </Node>
+  </Nodes>
+  <Connections>
+    <Connection>
+      <Origin ToolID="1" Connection="Output" />
+      <Destination ToolID="2" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="2" Connection="Output" />
+      <Destination ToolID="3" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="3" Connection="Output" />
+      <Destination ToolID="5" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="5" Connection="True" />
+      <Destination ToolID="7" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="6" Connection="Output" />
+      <Destination ToolID="8" Connection="Input" />
+    </Connection>
+    <Connection>
+      <Origin ToolID="7" Connection="Output" />
+      <Destination ToolID="6" Connection="Input" />
+    </Connection>
+  </Connections>
+  <Properties>
+    <Memory default="True" />
+    <GlobalRecordLimit value="0" />
+    <TempFiles default="True" />
+    <Annotation on="True" includeToolName="False" />
+    <ConvErrorLimit value="10" />
+    <ConvErrorLimit_Stop value="False" />
+    <CancelOnError value="False" />
+    <DisableBrowse value="False" />
+    <EnablePerformanceProfiling value="False" />
+    <PredictiveToolsCodePage value="1252" />
+    <DisableAllOutput value="False" />
+    <ShowAllMacroMessages value="False" />
+    <ShowConnectionStatusIsOn value="True" />
+    <ShowConnectionStatusOnlyWhenRunning value="True" />
+    <ZoomLevel value="0" />
+    <LayoutType>Horizontal</LayoutType>
+    <MetaInfo>
+      <NameIsFileName value="True" />
+      <Name>dailyReturnAAPL</Name>
+      <Description />
+      <RootToolName />
+      <ToolVersion />
+      <ToolInDb value="False" />
+      <CategoryName />
+      <SearchTags />
+      <Author />
+      <Company />
+      <Copyright />
+      <DescriptionLink actual="" displayed="" />
+      <Example>
+        <Description />
+        <File />
+      </Example>
+      <WorkflowId value="aad8f2eb-00ad-4046-9c21-d0b808759fe4" />
+      <Telemetry>
+        <PreviousWorkflowId value="b2786d47-3881-4069-a5c4-9ac90b594cc6" />
+        <OriginWorkflowId value="b2786d47-3881-4069-a5c4-9ac90b594cc6" />
+      </Telemetry>
+    </MetaInfo>
+    <Events>
+      <Enabled value="True" />
+    </Events>
+  </Properties>
+</AlteryxDocument>

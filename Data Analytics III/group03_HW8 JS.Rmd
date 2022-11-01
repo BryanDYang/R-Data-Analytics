@@ -1,0 +1,194 @@
+---
+title: "Module 8 Group Assignment"
+author: "Shawn Abdian, Lexie Brown, Jenna Swiecki, Carolina Trevino, Saeeda Zaman,Bryan Yang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Overview
+
+This assignment is based upon the R code, RStudio notebook, and discussion in the live session for this module. It does, however, use different data, so please make note of that. We have included that data (which, again, is different from the in-class lecture), a data description sheet (which is different from the in-class lecture), and the in-class RMD file (which is the same as the in-class lecture). We recommend that you attend or watch the live session recording for this module before attempting this assignment.    
+
+NANSE would like to get a better sense of how its stores in different parts of the country behave. In particular, they wonder if they could organize their cities into groups based upon the sales history of the stores in those cities. That is, they would like to get a better understanding of the geographical sales patterns at the city level. Luckily, they have a data set that lists each city as an observation and multiple features for each city such as the average size of each store in that city, the proportion of weeks each store in that city has had above median profit for a week, the average proportion of the top 20 products that the stores sell, the average proportion of products sold in different velocity groups, and the average proportion of products sold on promotion. Your job is to use the two clustering algorithms we have learned to cluster these cities into similar groups.    
+
+While you can simply reuse most of the code from class without alteration, this is a new dataset and you do have to make a few adjustments. In particular, before you run both the K-means analysis and the DBSCAN analysis, read the new dataset (“city.rds”) in and call it `clustering_input1`. Next, create a new dataset called `clustering_input2` by removing the columns `city`, `region`, and `province` from `clustering_input1`. Finally, use the number 77 for each `set.seed(77)` function.    
+
+Suggestion: While you could just cut and paste the code used in the high engagement session for this module, we encourage you to write all of the code from scratch. This is a technique we often use when looking up and using new code we are borrowing from someone else.    
+
+## 1.0 - Load and Prep the Data
+
+### Install/Load Packages and Read in Data
+```{r}
+library(tidyverse)
+library(factoextra)
+
+clustering_input1 <- read_rds("city.rds")
+
+# prep data per instruction
+clustering_input2 <- clustering_input1 %>% 
+  select(-city, -region, -province)
+
+str(clustering_input2)
+summary(clustering_input2)
+```
+
+### Z-score Standardization
+```{r}
+clustering_input2 <- as.data.frame(scale(clustering_input2))
+```
+
+## 2.0 - Picking k
+### Find a suitable k using two different methods
+```{r}
+# Within-cluster sum of square method
+set.seed(77)
+factoextra::fviz_nbclust(clustering_input2, kmeans, method = "wss")
+```
+
+```{r}
+set.seed(77)
+factoextra::fviz_nbclust(clustering_input2, kmeans, method = "silhouette")
+```
+
+## 3.0 - Run and Evaluate k-means
+### Run the model
+```{r}
+set.seed(77)
+clusters <- kmeans(clustering_input2, centers=6, iter.max=10, nstart=10)
+```
+
+### Check the size of the k clusters
+```{r}
+clusters$size
+```
+### A matrix indicating the mean values for each feature and cluster combination
+```{r}
+clusters$centers
+write.csv(clusters$centers,"desktop\\clusters.csv", row.names = FALSE)
+```
+### Visualize the clustering
+```{r}
+fviz_cluster(clusters, clustering_input2, geom="point", show.clust.cent=T, palette="jco", ggtheme=theme_classic())
+```
+
+1. (2 points) How many clusters do you want to use for the K-means algorithm for this data? Play around a bit to make your decision. Justify your answer with evidence from your analysis. Specifically, in a few sentences discuss the following:    
+   
++ 1.a. results from the “wss” and the “silhouette” methods of finding the optimal number of clusters,   
+   
+**For Within Sum of Square (wss) method, anything between 3-5 seems reasonable since we want to pick a k at the "knee/elbow" such that moving to the next higher k does not decrease wss much.**   
+   
+**Silhouette method measures and plots the quality of a clustering for a given value of k. It ultimately determines how well matched each object is to its own cluster compared to other clusters. Hence, the highest value is ideal. Therefore, anything between 2-10 seems reasonable. However, 2 is the highest.**
+   
++ 1.b. the size of clusters, and the two-dimensional cluster plot. There is no right answer here, but clearly defend your responses.    
+    
+**We tried cluster size 2-10, we want clusters to be similar in size. For that, we chose 3 based on the trial & error (clusters$size) and comparing "wss" and "silhouette plots.**
+
+## 4.0 - Put Clusters back into the dataset and investigate individual stores
+### Add clusters to the original, un-standardized dataset and add labels
+```{r}
+clustering_input1$cluster <- clusters$cluster
+
+clustering_input1 <- clustering_input1 %>% 
+      mutate(
+              cluster_labels = case_when
+                (
+                  cluster==1 ~ 'Hispter',
+                  cluster==2 ~ 'Avg_Joe',
+                  cluster==3 ~ 'Violet',
+                  cluster==4 ~ 'Sweet_Tooth',
+                  cluster==5 ~ 'Gamer',
+                  cluster==6 ~ 'Fire_Sale',
+                )
+             )
+
+clustering_input1 <- relocate(clustering_input1, cluster,  cluster_labels, .after = city)
+
+slice_sample(clustering_input1, n=15)
+```
+
+2. (3 points) Regardless of your answer above, use the following code for the `kmeans()` function to answer the rest of the questions about K-means: `kmeans(clustering_input2, centers=6, iter.max=10, nstart=10)`.
+   
++ 2.a.Using K-means, print the cluster centers using `clusters$centers` and name each of your clusters and explain how you came up with each name. As you do this, remember that the amounts you see are centered and standardized, so, focus on their sign and size without going into more detail. For example, a title might say something like, “Large; profitable; diverse products; chips and water”. Next, place those cluster names into the `clustering_input1` dataset using the code provided in class.    
+   
+**Analyzing the cluster centers, all the columns have similar values across the cluster 1-6 other than 'size' and 'high_med_gp'. Based on the difference of these two fields, we came up with some names of the clusters.**   
+
+**We named cluster 1 'Hipster', because it is the largest and has the highest median gross profit percentage stores with large stores. Also this cluster doesn't do promotions and has the lowest velocity of new products and sells the least of the most common products.**   
+**We named cluster 2 'Avg_Joe', because this cluster sells the most of the most common products. However, it has the lowest gross profit margin with lowest size of stores.**
+**We named cluster 3 'Violet', because this cluster sells most gums and waters. We thought of Violet from "Charlie and Chocolate Factory."**   
+**We named cluster 4 'Sweet_Tooth', because this cluster sells mostly bagged candies. Velocity B unit is the second highest selling group of products.**   
+**We named cluster 5 'Gamer', because this cluster sells the highest energy drinks and large bags of potato chips. Also it has the highest velocity of new products. Gamers love new technology and junk foods.**
+**We named cluster 6 'Fire_Sale', because this cluster has the highest volume of promotional sales.**
+
+**After naming the clusters, we placed those cluster names into the 'clustering_input1' dataset in the code above.**
+
++ 2.b.Which number of cluster groups together the cities that are the largest and most profitable?    
+   
+**Cluster 1 stores are the largest and most profitable.**
+   
++ 2.c.In two or three sentences, provide one recommendation to NANSE based upon this analysis.    
+   
+**All else is equal for 6 clusters other than this data, there seems to be a relationship between size of the stores and gross profits in general. Promotions and Velocity A (most common products) negatively impact profitability for NANSE based on Cluster 2 & 6. NANSE could further look into what the cluster 1 stores are doing different from cluster 2 & 6 in terms of velocity units.**
+   
+3. (2 points) After adding your cluster names to `clustering_input1` above in 2a, look at the dataset and use two or three sentences to describe what you learn about the cities of Trenton and Parry Sound. We did not standardize the data in `clustering_input1`, so this data is easier to interpret following the data description sheet.    
+   
+**Based on the data in 'clustering_input1', Parry Sound seems to be in the cluster 1 and Trenton cluster 2. This means that Parry Sound is one of the large size stores with above high median gross profit while Trenton is one of the small size stores with below high median gross profit. We can prove it by observing the data below. The size for Parry Sound is 955 and high_med_gp 1 and Trenton 351 & 0 for the same columns. It's also notable that other fields seem to vary more between two cities than respective cluster's fields average each city belongs to.**
+
+```{r}
+sample <- filter(clustering_input1, city=="PARRY SOUND"| city=="TRENTON")
+sample
+```
+
+
+## 5.0 DBSCAN
+### Load DBSCAN package & Reset Data
+```{r}
+library(dbscan)
+
+clustering_input1 <- read_rds("city.rds")
+
+# prep data per instruction
+clustering_input2 <- clustering_input1 %>% 
+  select(-city, -region, -province)
+
+```
+
+### Standardize the data using z-score standardization.
+```{r}
+clustering_input2 <- as.data.frame(scale(clustering_input2))
+```
+
+### Using `dbscan::knndistplot()` to find a suitable epsilon.
+```{r}
+dbscan::kNNdistplot(clustering_input2, k=3)
+
+# Drawing some lines to find the "elbow"
+abline(h = c(2, 3, 4, 5))
+```
+
+### Using the minPts and epsilon from above to run the DBSCAN algorithm
+```{r}
+set.seed(77)
+clusters_db <- dbscan::dbscan(clustering_input2, eps=5, minPts=4)
+```
+
+### Using the `table()` function to print the size of the clusters.
+```{r}
+table(clusters_db$cluster)
+```
+## 6.0 - Visualize the Clusters
+### Visualize the Clusters
+```{r}
+fviz_cluster(clusters_db, clustering_input2, geom="point", show.clust.cent=F, palette="jco", ggtheme=theme_classic())
+```
+
+4. (1 points) Run the DBSCAN algorithm using epsilon = 5 and minPts = 4. Print the size of the clusters that this creates. How many clusters are there and how many cities are in each cluster?    
+   
+**Based on the code and output above, there is one cluster with 253 cities. Other outlier cities are 4.**
+   
+5. (2 points) How does your solution using K-means compare to that using DBSCAN? Specifically, using about three sentences answer the following:    
++ 5.a.Which is more helpful and why for this dataset? Which method would you suggest that the management of NANSE use and why? 
+   
+**K-means provided more useful information for this dataset because dataset was more clustered together. K-means was able to parse the data with fixed cluster size where as the dataset was too clustered for DBSCAN. If the dataset had been more divided and clustered, then DBSCAN would've been a great choice.**
+
++ 5.b.How do the methods deal with outliers differently in this data?    
+**Although k-mean showed a meaningful insight for this dataset, it still included every single observation in the dataset. It was hard to figure out which observations were outliers. DBSCAN helps us with figuring out the outliers from the rest of the dataset as shown on the plot above.**

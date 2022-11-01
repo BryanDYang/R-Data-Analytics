@@ -1,0 +1,157 @@
+---
+title: "Module 8 Mini Assignment (Individual)"
+author: "Bryan Yang"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Overview    
+
+This assignment continues in the spirit of our first Mini Assignment by asking you to bring your own data (BYOD). In this assignment, you will identify a dataset (either the one you used in the first mini-assignment or a new one) and a problem that you solve using one of the supervised or unsupervised machine learning algorithms taught in this course: Linear Regression, Logistic Regression, Decision Tree, K-Nearest Neighbor, K-Means Clustering, or DBSCAN.    
+
+# Instruction    
+ 
+1. Find a dataset and a problem that you would like to solve using one of the supervised or unsupervised machine learning algorithms taught in this course (Modules 5-8).   
+
+2. The dataset must meet the requirement for this given algorithm. For example, a supervised machine learning algorithm requires a target variable while a clustering algorithm does not.    
+
+3. The dataset must have a minimum 500 rows.    
+
+4. The dataset may come from a public source or your workplace, but make sure it is something that you are inherently interested in working on. If the dataset comes from your workplace, make sure no identifiable, restricted, or sensitive information is included in the deliverables. That is, we do not ask you to share the data, but we do ask you to share views of the data in your submission file. It is your responsibility to make sure you do not show us anything that is problematic or sensitive. A few sources for finding a data set of your interest are provided at the bottom of this page. You are welcome to use the dataset from the first mini-assignment.   
+
+**I'll be using dataset from the first mini-assignment which is dataset from Realtor.com.**
+
+5. As part of the summary write-up described below, clearly describe the business problem: whether it is explanatory (causal) or predictive; discuss the dependent/ target variable; discuss independent/ predictor variables. Finally, discuss how knowledge generated from this model will help in decision making. If possible, discuss the various costs it may save or additional revenue it may generate.    
+
+**Please see the summary write-up (#15).**
+
+6. Read in the data.   
+
+```{r}
+#Load packages
+library(tidyverse)
+library(lubridate)
+library(jtools)
+library(ggstance)
+library(huxtable)
+library(corrplot)
+library(caret)
+
+#Read in data
+df1 <- read_rds('realtor_com.rds')
+```
+
+
+7. Make sure all columns to be used in the analysis are set to correct data types. That is, for example, if you want to use a date column, it is set as "date" type.   
+
+```{r}
+str(df1)
+```
+
+8. Handle missing values appropriately by either deleting them or imputing them (replacing them in some way that makes sense).   
+
+```{r}
+#Sum NA values in the dataframe.
+sum(is.na(df1))
+
+#How many distinct cbsa_title
+n_distinct(df1$cbsa_title)
+
+#After review of NA values, it was determined that some of the metros are not interesting or relevant.
+slice_sample(df1, n=15)
+
+#Delete rows that contain missing values in any of the columns.
+df2 <- df1 %>% na.omit
+
+#Still has 663 metros.
+n_distinct(df2$cbsa_title)
+```
+
+9. Do any other ETL and data clean-up tasks as required for the given algorithm.   
+
+```{r}
+#Delete irrelevant column.
+df3 <- df2 %>% select(-cbsa_code, -median_listing_price_mm, -median_listing_price_yy, -median_days_on_market_mm, -median_days_on_market_yy, -median_listing_price_per_square_foot_mm, -median_listing_price_per_square_foot_yy, -median_square_feet_mm, -median_square_feet_yy, -active_listing_count_mm, -active_listing_count_yy, -new_listing_count_mm, -new_listing_count_yy, -price_increased_count_mm, -price_increased_count_yy, -price_reduced_count_mm, -price_reduced_count_yy, -pending_listing_count_mm, -pending_listing_count_yy, -average_listing_price, -average_listing_price_mm, -average_listing_price_yy, -total_listing_count_mm, -total_listing_count_yy)
+
+#Rename columns.
+df4 <- df3 %>% rename(
+                      Date = month_date_yyyymm,
+                      Metro = cbsa_title,
+                      Metro_Rank = HouseholdRank
+                      )
+
+#Change to appropriate data types from factors.
+df4$Date <- ym(df4$Date)
+df4$pending_ratio_mm <- as.numeric(df4$pending_ratio_mm)
+df4$pending_ratio_yy <- as.numeric(df4$pending_ratio_yy)
+
+#Keep top 200 metros only.
+df5 <- df4 %>% filter(Metro_Rank <= 100)
+dim(df5)
+
+#Data prep
+df5$active_listing_count <- df5$active_listing_count / 1000
+df5$median_listing_price <- df5$median_listing_price / 1000
+```
+
+10. Print the data types of each column (e.g., use the `str()` function in RStudio).    
+
+```{r}
+str(df5)
+```
+
+11. Show summary of the columns (e.g., use the `summary()` function in RStudio).    
+
+```{r}
+summary(df5)
+```
+
+12. Split the data into train and test datasets, if you are interested in making a predictive model.   
+
+**Not applicable. I'll be using linear regression. However, I'll create correlation matrix on this section to show the relationships between columns.**
+
+```{r}
+cdf5 <- cor(df5 %>% select(median_listing_price, active_listing_count, median_days_on_market, price_increased_count, price_reduced_count))
+cdf5
+```
+```{r}
+corrplot(cdf5
+         , method = 'color' #pie and ellipse
+         , order = 'hclust' #orders the variables so that ones that behave similarly are placed next to each other
+         , addCoef.col = 'black' 
+         , number.cex = .6  #lower values decrease the size of the numbers in the cells
+         )
+```
+
+13. Run your model/ algorithm.   
+
+```{r}
+#Linear Regression No.1
+lm1 <- lm(median_listing_price ~ active_listing_count + pending_listing_count + median_listing_price + median_listing_price_per_square_foot + total_listing_count, data = df5)
+summary(lm1)
+```
+
+```{r}
+#Linear Regression No.2
+lm2 <- lm(median_listing_price ~ active_listing_count + median_days_on_market + pending_ratio + pending_listing_count + median_listing_price + median_listing_price_per_square_foot + median_square_feet + total_listing_count, data = df5)
+summary(lm2)
+```
+
+```{r}
+#Linear Regression No.3
+lm3 <- lm(median_listing_price ~ median_days_on_market + pending_ratio + median_listing_price + median_listing_price_per_square_foot + median_square_feet, data = df5)
+summary(lm3)
+```
+
+14. Report model performance. For explanatory models report p-value for the independent variable(s) of interest and for predictive models report a  confusion matrix and any other metrics such as sensitivity, specificity, precision, recall, R-squared, etc. as desired based on the business problem. For a clustering algorithm, discuss the clusters that are created.
+   
+15. Write a summary that includes the following: business problem (point 5 above), description and justification of the machine learning algorithm chosen, comments on the model performance, and insights from the model results. The suggested length is between 250 and 500 words.   
+
+**Business Problem:**   
+**Realtor.com provides many data related to residential housing market. This data captures top 100 metropolitan cities in the U.S. Whether it's a single family looking to buy a house or a large real estate private equity deciding which metric to focus on for the next investment, it's crucial to see which columns of the dataset are statistically significant to the housing prices because main stream media may present with miss leading indicators based on superficial beliefs. This solves the business/personal problem of buying a house for business/personal investing for housing without bias.**   
+
+**Model Justification**   
+**I tried all four methods of the algorithms. The most challenging part was preparing the data to fit into the algorithms other than linear regression. I was able to implement the data with little to no prep work. Since all the data was prepared and given to the students, I had little to no guidance on how to prepare the data. Closest to the implementation phase was the logistic algorithm. However, it was still challenging to produce any substantial outcome compared to linear regression as shown above which I felt was the outside the scope of this class. I'm hoping to explore more in details as my personal project to validate or adjust my linear regression model with the same dataset.**
+
+**Model Description & Performance:**  
+**The model performed very well with this particular dataset with linear regression. I was able to find which metrics are statistically significant and which are not to the median listing price (housing prices) which many would be interested in. active_listing_count, pending_listing_count, and total_listing_count had very high p-value 0.638, 0.515, and 0.597 respectively. Meaning they were not statistically significant. Looking at the report of the model performance and the output, it gave me an insight that maybe we shouldn't focus so much on the total listing or inventory of the market than what the mainstream media or Realtors are emphasizing it to be as one of the main indicators of the residential real estate market condition. Instead, we should focus on median_days_on_market, pending_ratio, median_listing_price_per_square_foot and median_square_feet because they all had very low p-value with three stars. The adjusted R-squared was very high as well with 0.9634. However, we may want to adjust the data to compare with other algorithms such as logistic regression to validate the output of this model.**
